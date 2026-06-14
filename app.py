@@ -59,16 +59,16 @@ st.write("Fill in the parameters to predict health status.")
 col1, col2 = st.columns(2)
 
 with col1:
-    age = st.slider("Age (years)", 0, 20, 5)
-    weight = st.slider("Weight (lbs)", 0, 150, 30)
-    annual_vet = st.slider("Annual Vet Visits", 0.0, 10.0, 1.0)
-    daily_activity = st.selectbox("Daily Activity Level", ['Low', 'Moderate', 'Active', 'Very Active'])
+    age = st.slider("Возраст", 0, 20, 5)
+    weight = st.slider("Вес (lbs)", 0, 150, 30)
+    annual_vet = st.slider("Посещения ветеринара", 0.0, 10.0, 1.0)
+    daily_activity = st.selectbox("Уровень активности", ['Low', 'Moderate', 'Active', 'Very Active'])
 
 with col2:
-    diet = st.selectbox("Diet", df['Diet'].dropna().unique())
-    medications = st.selectbox("Medications", df['Medications'].dropna().unique())
-    seizures = st.selectbox("Seizures", df['Seizures'].dropna().unique())
-    spay_neuter = st.selectbox("Spay/Neuter Status", df['Spay/Neuter Status'].dropna().unique())
+    diet = st.selectbox("Диета", df['Diet'].dropna().unique())
+    medications = st.selectbox("Употребление лекарств", df['Medications'].dropna().unique())
+    seizures = st.selectbox("Травмы/Заболевания", df['Seizures'].dropna().unique())
+    spay_neuter = st.selectbox("Стерилизован", df['Spay/Neuter Status'].dropna().unique())
 
 if st.button("Predict", type="primary"):
     input_data = pd.DataFrame({
