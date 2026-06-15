@@ -1,8 +1,13 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import joblib
 import warnings
+
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 warnings.filterwarnings('ignore')
 
@@ -18,10 +23,34 @@ ACTIVITY_CATEGORIES = ['Low', 'Moderate', 'Active', 'Very Active']
 
 @st.cache_resource
 def load_model():
-    model = joblib.load('best_dog_health_model.pkl')
-    preprocessor = joblib.load('preprocessor.pkl')
     df = pd.read_csv('synthetic_dog_breed_health_data.csv')
     df.replace('', np.nan, inplace=True)
+    df = df.drop(columns=['ID', 'Synthetic'], errors='ignore')
+
+    num_cols = df.select_dtypes(include=['number']).columns
+    df[num_cols] = df[num_cols].fillna(df[num_cols].median())
+
+    cat_cols = df.select_dtypes(include=['object']).columns
+    df[cat_cols] = df[cat_cols].fillna(df[cat_cols].mode().iloc[0])
+
+    df['Healthy'] = df['Healthy'].map({'Yes': 1, 'No': 0})
+
+    X = df[NUMERIC_FEATURES + ORDINAL_FEATURES + CATEGORICAL_FEATURES]
+    y = df['Healthy']
+
+    preprocessor = ColumnTransformer(transformers=[
+        ('num', Pipeline([('imputer', SimpleImputer(strategy='median')), ('scaler', StandardScaler())]), NUMERIC_FEATURES),
+        ('cat', Pipeline([('imputer', SimpleImputer(strategy='most_frequent')), ('onehot', OneHotEncoder(handle_unknown='ignore'))]), CATEGORICAL_FEATURES),
+        ('ord', Pipeline([
+            ('imputer', SimpleImputer(strategy='most_frequent')),
+            ('ordinal', OrdinalEncoder(categories=[SIZE_CATEGORIES, ACTIVITY_CATEGORIES, ACTIVITY_CATEGORIES]))
+        ]), ORDINAL_FEATURES)
+    ])
+
+    X_processed = preprocessor.fit_transform(X)
+    model = HistGradientBoostingClassifier(random_state=42, class_weight='balanced')
+    model.fit(X_processed, y)
+
     return model, preprocessor, df
 
 
